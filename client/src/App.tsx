@@ -14,14 +14,19 @@ import VideoEditor from "@/pages/VideoEditor";
 import DataAnalytics from "@/pages/DataAnalytics";
 import GraphGenerator from "@/pages/GraphGenerator";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [user, loading] = useAuthState(auth);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <div className="text-white text-xl font-semibold">Elora AI Loading...</div>
+          <div className="text-gray-300 text-sm mt-2">Premium AI Assistant with Advanced Features</div>
+        </div>
       </div>
     );
   }
@@ -38,8 +43,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-pulse rounded-full h-16 w-16 bg-purple-500 mx-auto mb-4 flex items-center justify-center">
+            <span className="text-white font-bold text-xl">E</span>
+          </div>
+          <div className="text-white text-xl font-semibold">Welcome to Elora AI</div>
+          <div className="text-gray-300 text-sm mt-2">Preparing your premium AI experience...</div>
+        </div>
       </div>
     );
   }

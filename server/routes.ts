@@ -12,6 +12,8 @@ import { EnhancedImageAnalyzer } from "./enhanced-image-analyzer";
 import { EnhancedPDFAnalyzer } from "./enhanced-pdf-analyzer";
 import { DataAnalytics } from "./data-analytics";
 import { EnhancedGraphGenerator } from "./enhanced-graph-generator";
+import { codexAgent } from './expanded-codex-agent';
+import { researchAgent } from './deep-research-agent';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -535,6 +537,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Multiple graph generation error:", error);
       res.status(500).json({ 
         message: "Multiple graph generation failed" 
+      });
+    }
+  });
+
+  // Premium Codex Agent endpoints
+  app.post("/api/codex/analyze", async (req, res) => {
+    try {
+      const result = await codexAgent.processCodexRequest({ ...req.body, action: 'analyze' });
+      res.json(result);
+    } catch (error) {
+      console.error("Codex analysis error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Codex analysis failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  app.post("/api/codex/debug", async (req, res) => {
+    try {
+      const result = await codexAgent.processCodexRequest({ ...req.body, action: 'debug' });
+      res.json(result);
+    } catch (error) {
+      console.error("Codex debug error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Codex debugging failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  app.post("/api/codex/optimize", async (req, res) => {
+    try {
+      const result = await codexAgent.processCodexRequest({ ...req.body, action: 'optimize' });
+      res.json(result);
+    } catch (error) {
+      console.error("Codex optimization error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Codex optimization failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  app.post("/api/codex/generate", async (req, res) => {
+    try {
+      const result = await codexAgent.processCodexRequest({ ...req.body, action: 'generate' });
+      res.json(result);
+    } catch (error) {
+      console.error("Codex generation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Codex code generation failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  // Deep Research Agent endpoints
+  app.post("/api/research/conduct", async (req, res) => {
+    try {
+      const result = await researchAgent.conductResearch(req.body);
+      res.json(result);
+    } catch (error) {
+      console.error("Research error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Deep research failed",
+        attribution: "This model is trained by Sourabh Kumar"
       });
     }
   });

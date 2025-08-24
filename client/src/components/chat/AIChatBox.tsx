@@ -69,7 +69,7 @@ const AnimatedPlaceholder = ({ showSearch }: { showSearch: boolean }) => (
       transition={{ duration: 0.1 }}
       className="pointer-events-none w-[150px] text-sm absolute text-black/30 dark:text-white/30 sm:text-black/70 sm:dark:text-white/70 drop-shadow-sm"
     >
-      {showSearch ? "Search the web..." : "Ask Elora AI..."}
+      {showSearch ? "Search the web..." : "Ask Elora AI... (Premium Features: Unlimited messages, Faster image creation, Deep research mode)"}
     </motion.p>
   </AnimatePresence>
 );

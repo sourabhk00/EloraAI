@@ -1,4 +1,8 @@
 // Enhanced Graph Generator - TypeScript Implementation
+// Premium features: Interactive 3D graphs, mathematical equations, data visualization
+// Supports multiple export formats and real-time updates
+
+import { evaluate, parse, compile } from 'mathjs';
 
 export interface GraphNode {
   id: string;
@@ -94,6 +98,15 @@ export class EnhancedGraphGenerator {
     showLabels: true,
     showEdgeLabels: false
   };
+  
+  // Premium features enabled
+  private premiumFeatures = {
+    interactive3D: true,
+    mathematicalGraphing: true,
+    realTimeUpdates: true,
+    advancedExports: true,
+    customAnimations: true
+  };
 
   constructor(canvasId?: string, width: number = 800, height: number = 600) {
     this.width = width;
@@ -107,6 +120,276 @@ export class EnhancedGraphGenerator {
         this.canvas.height = height;
       }
     }
+  }
+
+  // Enhanced mathematical graph generation
+  async generateMathematicalGraph(equation: string, options: any = {}): Promise<{
+    success: boolean;
+    graphData?: any;
+    plotlyConfig?: any;
+    visConfig?: any;
+    message: string;
+  }> {
+    try {
+      const {
+        xMin = -10,
+        xMax = 10,
+        yMin = -10,
+        yMax = 10,
+        resolution = 0.1,
+        graphType = '2d',
+        interactive = true,
+        theme = 'colorful'
+      } = options;
+
+      // Parse and compile the mathematical expression
+      let compiledExpression;
+      try {
+        compiledExpression = compile(equation);
+      } catch (parseError) {
+        return {
+          success: false,
+          message: `Invalid mathematical expression: ${equation}. Please check the syntax.`
+        };
+      }
+
+      const points: Array<{x: number, y: number, z?: number}> = [];
+      const xValues: number[] = [];
+      const yValues: number[] = [];
+      const zValues: number[] = [];
+
+      // Generate points for 2D graph
+      if (graphType === '2d') {
+        for (let x = xMin; x <= xMax; x += resolution) {
+          try {
+            const y = compiledExpression.evaluate({ x });
+            if (typeof y === 'number' && !isNaN(y) && isFinite(y)) {
+              points.push({ x, y });
+              xValues.push(x);
+              yValues.push(y);
+            }
+          } catch (evalError) {
+            // Skip invalid points
+            continue;
+          }
+        }
+      }
+      // Generate points for 3D graph
+      else if (graphType === '3d') {
+        const zMin = options.zMin || -10;
+        const zMax = options.zMax || 10;
+        const resolution3d = options.resolution3d || 0.5;
+        
+        for (let x = xMin; x <= xMax; x += resolution3d) {
+          for (let y = yMin; y <= yMax; y += resolution3d) {
+            try {
+              const z = compiledExpression.evaluate({ x, y });
+              if (typeof z === 'number' && !isNaN(z) && isFinite(z)) {
+                points.push({ x, y, z });
+                xValues.push(x);
+                yValues.push(y);
+                zValues.push(z);
+              }
+            } catch (evalError) {
+              continue;
+            }
+          }
+        }
+      }
+
+      if (points.length === 0) {
+        return {
+          success: false,
+          message: `No valid points generated for equation: ${equation}. Please check the domain and equation.`
+        };
+      }
+
+      // Generate Plotly configuration for interactive graphs
+      const plotlyConfig = this.generatePlotlyConfig(points, equation, graphType, theme);
+      
+      // Generate Vis.js configuration for network graphs
+      const visConfig = this.generateVisNetworkConfig(points, equation, theme);
+
+      return {
+        success: true,
+        graphData: points,
+        plotlyConfig,
+        visConfig,
+        message: `Successfully generated ${graphType.toUpperCase()} interactive graph for: ${equation} with ${points.length} points`
+      };
+    } catch (error) {
+      console.error('Mathematical graph generation error:', error);
+      return {
+        success: false,
+        message: `Failed to generate mathematical graph: ${error}`
+      };
+    }
+  }
+
+  private generatePlotlyConfig(points: any[], equation: string, graphType: string, theme: string) {
+    const colors = {
+      light: { bg: '#ffffff', line: '#1f77b4', text: '#2c3e50' },
+      dark: { bg: '#2c3e50', line: '#3498db', text: '#ecf0f1' },
+      colorful: { bg: '#f8f9fa', line: '#e74c3c', text: '#2c3e50' }
+    };
+    const themeColors = colors[theme as keyof typeof colors] || colors.colorful;
+
+    if (graphType === '2d') {
+      return {
+        data: [{
+          x: points.map(p => p.x),
+          y: points.map(p => p.y),
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: equation,
+          line: {
+            color: themeColors.line,
+            width: 3
+          },
+          marker: {
+            size: 4,
+            color: themeColors.line
+          }
+        }],
+        layout: {
+          title: {
+            text: `Interactive Graph: y = ${equation}`,
+            font: { size: 18, color: themeColors.text }
+          },
+          xaxis: {
+            title: 'x',
+            gridcolor: '#ddd',
+            zerolinecolor: '#888'
+          },
+          yaxis: {
+            title: 'y',
+            gridcolor: '#ddd',
+            zerolinecolor: '#888'
+          },
+          plot_bgcolor: themeColors.bg,
+          paper_bgcolor: themeColors.bg,
+          font: { color: themeColors.text },
+          hovermode: 'closest',
+          showlegend: true
+        },
+        config: {
+          responsive: true,
+          displayModeBar: true,
+          modeBarButtonsToAdd: ['pan2d', 'lasso2d'],
+          toImageButtonOptions: {
+            format: 'png',
+            filename: `graph_${equation.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            height: 600,
+            width: 800,
+            scale: 2
+          }
+        }
+      };
+    } else if (graphType === '3d') {
+      // Create 3D surface plot
+      const xUnique = [...new Set(points.map(p => p.x))].sort((a, b) => a - b);
+      const yUnique = [...new Set(points.map(p => p.y))].sort((a, b) => a - b);
+      const zMatrix: number[][] = [];
+      
+      for (let i = 0; i < yUnique.length; i++) {
+        zMatrix[i] = [];
+        for (let j = 0; j < xUnique.length; j++) {
+          const point = points.find(p => 
+            Math.abs(p.x - xUnique[j]) < 0.01 && Math.abs(p.y - yUnique[i]) < 0.01
+          );
+          zMatrix[i][j] = point ? point.z || 0 : 0;
+        }
+      }
+
+      return {
+        data: [{
+          x: xUnique,
+          y: yUnique,
+          z: zMatrix,
+          type: 'surface',
+          name: equation,
+          colorscale: 'Viridis',
+          showscale: true
+        }],
+        layout: {
+          title: {
+            text: `3D Interactive Surface: z = ${equation}`,
+            font: { size: 18, color: themeColors.text }
+          },
+          scene: {
+            xaxis: { title: 'x' },
+            yaxis: { title: 'y' },
+            zaxis: { title: 'z' },
+            camera: {
+              eye: { x: 1.5, y: 1.5, z: 1.5 }
+            }
+          },
+          plot_bgcolor: themeColors.bg,
+          paper_bgcolor: themeColors.bg,
+          font: { color: themeColors.text }
+        },
+        config: {
+          responsive: true,
+          displayModeBar: true
+        }
+      };
+    }
+  }
+
+  private generateVisNetworkConfig(points: any[], equation: string, theme: string) {
+    // Convert mathematical points to network nodes for alternative visualization
+    const nodes = points.slice(0, 100).map((point, index) => ({
+      id: index,
+      label: `(${point.x.toFixed(2)}, ${point.y.toFixed(2)})`,
+      x: point.x * 50,
+      y: point.y * 50,
+      color: {
+        background: theme === 'dark' ? '#3498db' : '#e74c3c',
+        border: theme === 'dark' ? '#2980b9' : '#c0392b'
+      },
+      size: 15
+    }));
+
+    const edges = [];
+    for (let i = 0; i < nodes.length - 1; i++) {
+      edges.push({
+        from: i,
+        to: i + 1,
+        color: theme === 'dark' ? '#95a5a6' : '#34495e',
+        width: 2
+      });
+    }
+
+    return {
+      nodes,
+      edges,
+      options: {
+        layout: {
+          improvedLayout: true
+        },
+        physics: {
+          enabled: true,
+          stabilization: { iterations: 100 }
+        },
+        interaction: {
+          hover: true,
+          zoomView: true,
+          dragView: true
+        },
+        nodes: {
+          shape: 'circle',
+          font: {
+            color: theme === 'dark' ? '#ecf0f1' : '#2c3e50',
+            size: 12
+          }
+        },
+        edges: {
+          smooth: {
+            type: 'continuous'
+          }
+        }
+      }
+    };
   }
 
   // Graph generation methods
@@ -581,6 +864,240 @@ export class EnhancedGraphGenerator {
       node.x = Math.random() * (this.width - 40) + 20;
       node.y = Math.random() * (this.height - 40) + 20;
     });
+  }
+
+  // Enhanced generate method for API endpoint
+  async generateGraph(request: any): Promise<{
+    success: boolean;
+    graphData?: any;
+    plotlyConfig?: any;
+    visConfig?: any;
+    chartConfig?: any;
+    message: string;
+    attribution: string;
+  }> {
+    try {
+      const {
+        type = 'mathematical',
+        equation,
+        data,
+        options = {}
+      } = request;
+
+      let result;
+
+      switch (type) {
+        case 'mathematical':
+          if (!equation) {
+            return {
+              success: false,
+              message: 'Mathematical equation is required for mathematical graphs',
+              attribution: 'This model is trained by Sourabh Kumar'
+            };
+          }
+          result = await this.generateMathematicalGraph(equation, options);
+          break;
+
+        case 'network':
+          result = this.generateNetworkGraph(data, options);
+          break;
+
+        case 'data':
+          result = this.generateDataVisualization(data, options);
+          break;
+
+        case 'custom':
+          result = this.generateCustomGraph(data, options);
+          break;
+
+        default:
+          return {
+            success: false,
+            message: `Unsupported graph type: ${type}`,
+            attribution: 'This model is trained by Sourabh Kumar'
+          };
+      }
+
+      return {
+        ...result,
+        attribution: 'This model is trained by Sourabh Kumar'
+      };
+    } catch (error) {
+      console.error('Graph generation error:', error);
+      return {
+        success: false,
+        message: `Failed to generate graph: ${error}`,
+        attribution: 'This model is trained by Sourabh Kumar'
+      };
+    }
+  }
+
+  private generateNetworkGraph(data: any, options: any) {
+    // Generate interactive network visualization
+    const { nodes = 10, edges = 15, layout = 'force' } = options;
+    const graphData = this.generateRandomGraph(nodes, edges);
+    
+    const visConfig = {
+      nodes: graphData.nodes.map(node => ({
+        id: node.id,
+        label: node.label,
+        color: node.color,
+        size: node.size
+      })),
+      edges: graphData.edges.map(edge => ({
+        from: edge.source,
+        to: edge.target,
+        color: edge.color,
+        width: 2
+      })),
+      options: {
+        layout: {
+          improvedLayout: true,
+          randomSeed: 42
+        },
+        physics: {
+          enabled: true,
+          barnesHut: {
+            gravitationalConstant: -8000,
+            centralGravity: 0.3,
+            springLength: 95,
+            springConstant: 0.04,
+            damping: 0.09
+          }
+        },
+        interaction: {
+          hover: true,
+          zoomView: true,
+          dragView: true
+        }
+      }
+    };
+
+    return {
+      success: true,
+      graphData,
+      visConfig,
+      message: `Generated interactive network graph with ${nodes} nodes and ${edges} edges`
+    };
+  }
+
+  private generateDataVisualization(data: any, options: any) {
+    // Generate Chart.js configuration for data visualization
+    const { chartType = 'line', theme = 'colorful' } = options;
+    
+    let chartData = data;
+    if (!chartData || !chartData.labels || !chartData.datasets) {
+      // Generate sample data if none provided
+      chartData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Sample Data',
+          data: [12, 19, 3, 5, 2, 3],
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          tension: 0.1
+        }]
+      };
+    }
+
+    const chartConfig = {
+      type: chartType,
+      data: chartData,
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Interactive Data Visualization'
+          },
+          legend: {
+            display: true,
+            position: 'top' as const
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index' as const
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'X Axis'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Y Axis'
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeInOutQuart'
+        }
+      }
+    };
+
+    return {
+      success: true,
+      chartConfig,
+      message: `Generated interactive ${chartType} chart visualization`
+    };
+  }
+
+  private generateCustomGraph(data: any, options: any) {
+    // Generate custom graph based on provided specifications
+    const graphData = data || this.generateRandomGraph(8, 12);
+    
+    return {
+      success: true,
+      graphData,
+      message: 'Generated custom graph visualization'
+    };
+  }
+
+  // Multiple graph generation for comparison
+  async generateMultipleGraphs(equation: string, graphTypes: string[]): Promise<{
+    success: boolean;
+    graphs?: any[];
+    message: string;
+    attribution: string;
+  }> {
+    try {
+      const graphs = [];
+      
+      for (const graphType of graphTypes) {
+        const result = await this.generateMathematicalGraph(equation, {
+          graphType,
+          interactive: true,
+          theme: 'colorful'
+        });
+        
+        if (result.success) {
+          graphs.push({
+            type: graphType,
+            ...result
+          });
+        }
+      }
+
+      return {
+        success: true,
+        graphs,
+        message: `Generated ${graphs.length} different visualizations for: ${equation}`,
+        attribution: 'This model is trained by Sourabh Kumar'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to generate multiple graphs: ${error}`,
+        attribution: 'This model is trained by Sourabh Kumar'
+      };
+    }
   }
 
   // Network analysis methods
