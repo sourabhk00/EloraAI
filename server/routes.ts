@@ -14,6 +14,11 @@ import { DataAnalytics } from "./data-analytics";
 import { EnhancedGraphGenerator } from "./enhanced-graph-generator";
 import { codexAgent } from './expanded-codex-agent';
 import { researchAgent } from './deep-research-agent';
+import { advancedCodexAgent } from './advanced-codex-agent';
+// Temporarily disable HuggingFace import until service is fixed
+// import { huggingFaceService } from './huggingface-service';
+// Temporarily disable MongoDB import until service is fixed
+// import { mongoDBChatService } from './mongodb-chat-service';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -32,6 +37,9 @@ const graphGenerator = new EnhancedGraphGenerator();
 import { AdvancedImageEditor } from './advanced-image-editor';
 import { AdvancedVideoEditor } from './advanced-video-editor';
 import { AdvancedDataAnalyzer } from './advanced-data-analytics';
+
+// Initialize premium services (MongoDB temporarily disabled)
+// mongoDBChatService.connect().catch(console.error);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoints
@@ -610,6 +618,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Deep research failed",
         attribution: "This model is trained by Sourabh Kumar"
       });
+    }
+  });
+
+  // Advanced Codex Agent (Real-world actions)
+  app.post("/api/advanced-codex/execute", async (req, res) => {
+    try {
+      const result = await advancedCodexAgent.executeAction(req.body);
+      res.json(result);
+    } catch (error) {
+      console.error("Advanced Codex error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Advanced action execution failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  // HuggingFace Image Generation
+  app.post("/api/huggingface/generate-image", async (req, res) => {
+    try {
+      const result = await huggingFaceService.generateImage(req.body);
+      res.json(result);
+    } catch (error) {
+      console.error("HuggingFace image generation error:", error);
+      res.status(500).json({
+        success: false,
+        message: "HuggingFace image generation failed",
+        attribution: "This model is trained by Sourabh Kumar"
+      });
+    }
+  });
+
+  // MongoDB Chat Service endpoints
+  app.get("/api/mongo/threads/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const threads = await mongoDBChatService.getThreads(userId);
+      res.json(threads);
+    } catch (error) {
+      console.error("MongoDB threads error:", error);
+      res.status(500).json({ error: "Failed to fetch threads" });
+    }
+  });
+
+  app.get("/api/mongo/messages/:threadId", async (req, res) => {
+    try {
+      const { threadId } = req.params;
+      const messages = await mongoDBChatService.getMessages(threadId);
+      res.json(messages);
+    } catch (error) {
+      console.error("MongoDB messages error:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/mongo/messages", async (req, res) => {
+    try {
+      const messageId = await mongoDBChatService.saveMessage(req.body);
+      res.json({ success: true, messageId });
+    } catch (error) {
+      console.error("MongoDB save message error:", error);
+      res.status(500).json({ error: "Failed to save message" });
     }
   });
 

@@ -211,17 +211,18 @@ export async function generateVideoWithSora(
   }
 }
 
-// Premium feature: Enhanced graph generation
+// Premium feature: Enhanced graph generation with proper mathematical curves
 export async function generateInteractiveGraph(
-  request: any
-): Promise<{ success: boolean; message: string; graphData?: any }> {
+  equation: string,
+  options: any = {}
+): Promise<{ success: boolean; message: string; graphData?: any; plotlyConfig?: any }> {
   try {
     const response = await fetch('/api/multimedia/graph-generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(request)
+      body: JSON.stringify({ equation, ...options })
     });
 
     if (!response.ok) {
@@ -234,6 +235,103 @@ export async function generateInteractiveGraph(
     return {
       success: false,
       message: `Graph generation failed: ${error}`
+    };
+  }
+}
+
+// Advanced Codex Agent for real-world actions
+export async function executeAdvancedAction(
+  actionType: string,
+  action: string,
+  parameters?: any
+): Promise<{ success: boolean; message: string; result?: any }> {
+  try {
+    const response = await fetch('/api/advanced-codex/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ type: actionType, action, parameters })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to execute advanced action');
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      message: `Advanced action failed: ${error}`
+    };
+  }
+}
+
+// HuggingFace image generation with big-asp-v2 model
+export async function generateHuggingFaceImage(
+  prompt: string,
+  parameters?: any
+): Promise<{ success: boolean; message: string; imageBase64?: string }> {
+  try {
+    const response = await fetch('/api/huggingface/generate-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt, parameters })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate HuggingFace image');
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      message: `HuggingFace image generation failed: ${error}`
+    };
+  }
+}
+
+// MongoDB chat history management
+export async function getConversationalContext(
+  userId: string,
+  threadId: string
+): Promise<any> {
+  try {
+    const response = await fetch(`/api/mongo/context/${userId}/${threadId}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to get conversational context:', error);
+    return null;
+  }
+}
+
+export async function saveMessageToMongo(
+  message: any
+): Promise<{ success: boolean; messageId?: string }> {
+  try {
+    const response = await fetch('/api/mongo/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(message)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save message');
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    return {
+      success: false
     };
   }
 }

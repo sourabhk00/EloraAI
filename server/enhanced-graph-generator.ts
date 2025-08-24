@@ -158,19 +158,55 @@ export class EnhancedGraphGenerator {
       const yValues: number[] = [];
       const zValues: number[] = [];
 
-      // Generate points for 2D graph
+      // Generate points for 2D graph with enhanced mathematical parsing
       if (graphType === '2d') {
         for (let x = xMin; x <= xMax; x += resolution) {
           try {
-            const y = compiledExpression.evaluate({ x });
+            // Enhanced equation parsing for common functions like sin(x), cos(x), etc.
+            let processedEquation = equation.toLowerCase()
+              .replace(/sin\s*\(/g, 'sin(')
+              .replace(/cos\s*\(/g, 'cos(')
+              .replace(/tan\s*\(/g, 'tan(')
+              .replace(/log\s*\(/g, 'log(')
+              .replace(/ln\s*\(/g, 'log(')
+              .replace(/sqrt\s*\(/g, 'sqrt(')
+              .replace(/abs\s*\(/g, 'abs(')
+              .replace(/exp\s*\(/g, 'exp(');
+            
+            // Handle cases like 'sinx' -> 'sin(x)'
+            processedEquation = processedEquation
+              .replace(/sin\s*x/g, 'sin(x)')
+              .replace(/cos\s*x/g, 'cos(x)')
+              .replace(/tan\s*x/g, 'tan(x)')
+              .replace(/\ba\s*sin\s*x/g, 'a * sin(x)')
+              .replace(/\ba\s*cos\s*x/g, 'a * cos(x)')
+              .replace(/\ba\s*tan\s*x/g, 'a * tan(x)');
+            
+            // Default 'a' to 1 if not specified
+            if (processedEquation.includes('a') && !processedEquation.includes('a =')) {
+              processedEquation = processedEquation.replace(/\ba\b/g, '1');
+            }
+            
+            const compiledProcessed = compile(processedEquation);
+            const y = compiledProcessed.evaluate({ x });
+            
             if (typeof y === 'number' && !isNaN(y) && isFinite(y)) {
-              points.push({ x, y });
+              points.push({ x: Number(x.toFixed(3)), y: Number(y.toFixed(6)) });
               xValues.push(x);
               yValues.push(y);
             }
           } catch (evalError) {
-            // Skip invalid points
-            continue;
+            // Try fallback evaluation
+            try {
+              const fallbackY = this.evaluateFallbackFunction(equation, x);
+              if (typeof fallbackY === 'number' && !isNaN(fallbackY) && isFinite(fallbackY)) {
+                points.push({ x: Number(x.toFixed(3)), y: Number(fallbackY.toFixed(6)) });
+                xValues.push(x);
+                yValues.push(fallbackY);
+              }
+            } catch {
+              continue;
+            }
           }
         }
       }
@@ -240,37 +276,54 @@ export class EnhancedGraphGenerator {
           x: points.map(p => p.x),
           y: points.map(p => p.y),
           type: 'scatter',
-          mode: 'lines+markers',
-          name: equation,
+          mode: 'lines',
+          name: `y = ${equation}`,
           line: {
             color: themeColors.line,
-            width: 3
+            width: 4,
+            shape: 'spline',
+            smoothing: 1.3
           },
-          marker: {
-            size: 4,
-            color: themeColors.line
-          }
+          connectgaps: false
         }],
         layout: {
           title: {
-            text: `Interactive Graph: y = ${equation}`,
-            font: { size: 18, color: themeColors.text }
+            text: `Graph of ${equation}`,
+            font: { size: 20, color: themeColors.text, family: 'Arial, sans-serif' }
           },
           xaxis: {
-            title: 'x',
-            gridcolor: '#ddd',
-            zerolinecolor: '#888'
+            title: { text: 'x', font: { size: 16, color: themeColors.text } },
+            gridcolor: '#e1e5e9',
+            zerolinecolor: '#6b7280',
+            showgrid: true,
+            zeroline: true,
+            showspikes: true,
+            spikemode: 'across',
+            spikesnap: 'cursor'
           },
           yaxis: {
-            title: 'y',
-            gridcolor: '#ddd',
-            zerolinecolor: '#888'
+            title: { text: 'y', font: { size: 16, color: themeColors.text } },
+            gridcolor: '#e1e5e9',
+            zerolinecolor: '#6b7280',
+            showgrid: true,
+            zeroline: true,
+            showspikes: true,
+            spikemode: 'across',
+            spikesnap: 'cursor'
           },
           plot_bgcolor: themeColors.bg,
           paper_bgcolor: themeColors.bg,
-          font: { color: themeColors.text },
-          hovermode: 'closest',
-          showlegend: true
+          font: { color: themeColors.text, family: 'Arial, sans-serif' },
+          hovermode: 'x unified',
+          showlegend: true,
+          legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: '#ddd',
+            borderwidth: 1
+          },
+          margin: { l: 80, r: 40, t: 80, b: 60 }
         },
         config: {
           responsive: true,
@@ -279,8 +332,8 @@ export class EnhancedGraphGenerator {
           toImageButtonOptions: {
             format: 'png',
             filename: `graph_${equation.replace(/[^a-zA-Z0-9]/g, '_')}`,
-            height: 600,
-            width: 800,
+            height: 700,
+            width: 1000,
             scale: 2
           }
         }
@@ -1647,5 +1700,55 @@ export class GraphAlgorithms {
     });
 
     return cycles;
+  }
+
+  // Enhanced mathematical function evaluation with fallback
+  private evaluateFallbackFunction(equation: string, x: number): number {
+    // Advanced fallback evaluation for mathematical functions
+    let expr = equation.toLowerCase()
+      .replace(/\bx\b/g, `(${x})`)
+      .replace(/sin\s*\(/g, 'Math.sin(')
+      .replace(/cos\s*\(/g, 'Math.cos(')
+      .replace(/tan\s*\(/g, 'Math.tan(')
+      .replace(/asin\s*\(/g, 'Math.asin(')
+      .replace(/acos\s*\(/g, 'Math.acos(')
+      .replace(/atan\s*\(/g, 'Math.atan(')
+      .replace(/sinh\s*\(/g, 'Math.sinh(')
+      .replace(/cosh\s*\(/g, 'Math.cosh(')
+      .replace(/tanh\s*\(/g, 'Math.tanh(')
+      .replace(/log\s*\(/g, 'Math.log(')
+      .replace(/ln\s*\(/g, 'Math.log(')
+      .replace(/log10\s*\(/g, 'Math.log10(')
+      .replace(/sqrt\s*\(/g, 'Math.sqrt(')
+      .replace(/abs\s*\(/g, 'Math.abs(')
+      .replace(/exp\s*\(/g, 'Math.exp(')
+      .replace(/floor\s*\(/g, 'Math.floor(')
+      .replace(/ceil\s*\(/g, 'Math.ceil(')
+      .replace(/round\s*\(/g, 'Math.round(')
+      .replace(/\^/g, '**')
+      .replace(/pi/g, 'Math.PI')
+      .replace(/e/g, 'Math.E');
+    
+    // Handle common patterns like 'sinx' -> 'sin(x)'
+    expr = expr
+      .replace(/sin\s*x/g, 'Math.sin(x)')
+      .replace(/cos\s*x/g, 'Math.cos(x)')
+      .replace(/tan\s*x/g, 'Math.tan(x)')
+      .replace(/\ba\s*sin\s*x/g, '1 * Math.sin(x)')
+      .replace(/\ba\s*cos\s*x/g, '1 * Math.cos(x)')
+      .replace(/\ba\s*tan\s*x/g, '1 * Math.tan(x)')
+      .replace(/\ba\b/g, '1'); // Default 'a' to 1
+    
+    // Handle multiplication patterns
+    expr = expr.replace(/(\d)\s*\(/g, '$1*('); // 2(x) -> 2*(x)
+    expr = expr.replace(/\)\s*(\d)/g, ')*$1'); // (x)2 -> (x)*2
+    expr = expr.replace(/\)\s*\(/g, ')*('); // )(-> )*(
+    
+    try {
+      const result = eval(expr);
+      return typeof result === 'number' && !isNaN(result) && isFinite(result) ? result : 0;
+    } catch {
+      return 0;
+    }
   }
 }
