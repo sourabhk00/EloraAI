@@ -1,0 +1,11 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+[pack]
+	window = 0
+	threads = 1
+[remote "origin"]
+	url = https://github.com/sourabhk00/EloraAI.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
