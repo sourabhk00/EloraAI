@@ -1,6 +1,7 @@
 // Advanced Codex Agent - Real-World Action Capable AI Assistant
 // Can perform actions like ordering food, booking services, web automation
 
+
 export interface ActionRequest {
   type: 'web_automation' | 'api_call' | 'service_booking' | 'food_order' | 'general_task';
   action: string;
