@@ -1,6 +1,7 @@
 // Expanded Codex Agent - Premium AI Programming Assistant
 // Features: Deep code analysis, multi-language support, real-time debugging
 
+
 export interface CodexRequest {
   action: 'analyze' | 'debug' | 'optimize' | 'explain' | 'generate' | 'refactor';
   code?: string;
