@@ -1,6 +1,7 @@
 // Deep Research Agent - Premium AI Research Assistant
 // Features: Multi-source analysis, comprehensive research, intelligent synthesis
 
+
 export interface ResearchRequest {
   query: string;
   depth: 'basic' | 'intermediate' | 'advanced' | 'expert';
