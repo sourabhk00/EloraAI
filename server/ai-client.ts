@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 import type { AiModel, ApiKeys, ChatMessage } from '@shared/schema';
 
+
 // Premium features configuration
 const PREMIUM_FEATURES = {
   unlimitedMessages: true,
