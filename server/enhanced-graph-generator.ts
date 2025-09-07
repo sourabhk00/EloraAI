@@ -2,6 +2,7 @@
 // Premium features: Interactive 3D graphs, mathematical equations, data visualization
 // Supports multiple export formats and real-time updates
 
+
 import { evaluate, parse, compile } from 'mathjs';
 
 export interface GraphNode {
