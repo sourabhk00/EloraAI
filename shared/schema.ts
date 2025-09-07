@@ -153,6 +153,7 @@ export interface ImageGenerationRequest {
   size?: '512x512' | '1024x1024' | '1920x1080';
 }
 
+
 export interface VideoGenerationRequest {
   prompt: string;
   duration?: number;
